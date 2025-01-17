@@ -75,6 +75,8 @@ export default function Model() {
             scale={scale}
             onPointerEnter={() => setHovered(true)}
             onPointerLeave={() => setHovered(false)}
+            // @ts-ignore
+
             onPointerMove={handlePointerMove}
         >
             <meshBasicMaterial />
