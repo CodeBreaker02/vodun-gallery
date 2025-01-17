@@ -2,6 +2,7 @@
 
 import { Canvas } from '@react-three/fiber';
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import HoverEffect from "../components/HoverEffect";
 import NoiseCircleEffect from "../components/NoiseCircleEffect";
 import MagneticEffect from "../components/MagneticEffect";
@@ -125,7 +126,30 @@ function useIsInViewport(ref: RefObject<HTMLElement>): boolean {
 function HoverCard({ mainImageUrl, hoverImageUrl, effect }: HoverCardProps) {
     const cardRef = useRef<HTMLDivElement>(null);
     const isInViewport = useIsInViewport(cardRef);
+    const [isLoading, setIsLoading] = useState(true);
     const EffectComponent = effect.component;
+
+    useEffect(() => {
+        if (isInViewport) {
+            // Preload images
+            const mainImage = new Image();
+            const hoverImage = new Image();
+
+            let loadedCount = 0;
+            const checkLoaded = () => {
+                loadedCount++;
+                if (loadedCount === 2) {
+                    setIsLoading(false);
+                }
+            };
+
+            mainImage.onload = checkLoaded;
+            hoverImage.onload = checkLoaded;
+
+            mainImage.src = mainImageUrl;
+            hoverImage.src = hoverImageUrl;
+        }
+    }, [isInViewport, mainImageUrl, hoverImageUrl]);
 
     const renderEffect = () => {
         if (effect.type === 'shape-hover') {
@@ -150,23 +174,37 @@ function HoverCard({ mainImageUrl, hoverImageUrl, effect }: HoverCardProps) {
         <Card ref={cardRef} className="w-[400px] h-[500px] overflow-hidden bg-transparent border-0 transition-all duration-300">
             <CardContent className="p-0 h-full relative">
                 {isInViewport && (
-                    <div className="absolute inset-0">
-                        <Canvas
-                            camera={{
-                                fov: 45,
-                                near: 0.1,
-                                far: 100,
-                                position: [0, 0, 2]
-                            }}
-                            dpr={[1, 2]}
-                            gl={{
-                                powerPreference: "high-performance",
-                                antialias: false
-                            }}
-                        >
-                            {renderEffect()}
-                        </Canvas>
-                    </div>
+                    <>
+                        {isLoading ? (
+                            <div className="w-full h-full flex items-center justify-center">
+                                <div className="space-y-6 w-[90%]">
+                                    <Skeleton className="h-[400px] w-full rounded-xl" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-[80%]" />
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="absolute inset-0">
+                                <Canvas
+                                    camera={{
+                                        fov: 45,
+                                        near: 0.1,
+                                        far: 100,
+                                        position: [0, 0, 2]
+                                    }}
+                                    dpr={[1, 2]}
+                                    gl={{
+                                        powerPreference: "high-performance",
+                                        antialias: false
+                                    }}
+                                >
+                                    {renderEffect()}
+                                </Canvas>
+                            </div>
+                        )}
+                    </>
                 )}
             </CardContent>
         </Card>
